@@ -27,6 +27,19 @@ const { quote, id } = await fetch(
     return json;
   });
 
+switch (quote.kind) {
+  case "sell":
+    quote.buyAmount = quote.buyAmount
+      .mul(10000 - options.slippage)
+      .div(10000);
+    break;
+  case "buy":
+    quote.sellAmount = quote.sellAmount
+      .mul(10000 + options.slippage)
+      .div(10000);
+    break;
+}
+
 const { chainId } = await options.provider.getNetwork();
 const orderHash = ethers.utils._TypedDataEncoder.hash(
   {

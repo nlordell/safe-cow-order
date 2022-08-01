@@ -26,6 +26,7 @@ function apiUrl(url, provider) {
 export function parse(args) {
   const flags = parseFlags(args, {
     string: [
+      "api",
       "buy-amount",
       "buy-token",
       "node",
@@ -57,6 +58,7 @@ OPTIONS:
         --safe <ADDRESS>           Gnosis Safe address
         --sell-amount <AMOUNT>     The sell amount for a sell order
         --sell-token <ADDRESS>     The token to sell
+        --slippage <BPS>           Additional slippage for the order
     -V, --version                  Print version information
 `.trim());
     Deno.exit(0);
@@ -100,12 +102,6 @@ OPTIONS:
     ? { kind: "sell", sellAmountBeforeFee: amount }
     : { kind: "buy", buyAmountAfterFee: amount };
 
-  const owners = opt("owner").map((pk) => new ethers.Wallet(pk, provider));
-  owners.sort((a, b) => {
-    const [aa, bb] = [a.address.toLowerCase(), b.address.toLowerCase()];
-    return (aa > bb) ? 1 : (aa < bb) ? -1 : 0;
-  });
-
   return {
     provider,
     api: apiUrl(flags["api"], provider),
@@ -114,5 +110,6 @@ OPTIONS:
     sellToken: ethers.utils.getAddress(opt("sell-token")),
     buyToken: ethers.utils.getAddress(opt("buy-token")),
     side,
+    slippage: parseInt(flags["slippage"] ?? 100),
   };
 }
