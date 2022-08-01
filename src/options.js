@@ -1,25 +1,15 @@
 import { ethers } from "https://cdn.ethers.io/lib/ethers-5.6.esm.min.js";
 import { parse as parseFlags } from "https://deno.land/std@0.150.0/flags/mod.ts";
 
+import { defaultApiUrl } from "./api.js";
+
 const NAME = "safe-cow-order";
 const VERSION = "0.0.1";
 
 function apiUrl(url, provider) {
   return url !== undefined ? () => Promise.resolved(url) : async () => {
     const { chainId } = await provider.getNetwork();
-    const barn = "https://barn.api.cow.fi";
-    switch (chainId) {
-      case 1:
-        return `${barn}/mainnet`;
-      case 4:
-        return `${barn}/rinkeby`;
-      case 5:
-        return `${barn}/goerli`;
-      case 100:
-        return `${barn}/xdai`;
-      default:
-        return `http://localhost:8080`;
-    }
+    return defaultApiUrl(chainId);
   };
 }
 

@@ -1,5 +1,8 @@
 import { ethers } from "https://cdn.ethers.io/lib/ethers-5.6.esm.min.js";
+
+import { checkJsonError } from "./api.js";
 import { parse } from "./options.js";
+import { sortByAddress } from "./signers.js";
 
 const options = parse(Deno.args);
 
@@ -18,25 +21,20 @@ const { quote, id } = await fetch(
       signingScheme: "eip1271",
     }),
   },
-)
-  .then((response) => response.json())
-  .then((json) => {
-    if (json.errorType) {
-      throw new Error(json.description ?? json.errorType);
-    }
-    return json;
-  });
+).then(checkJsonError);
 
 switch (quote.kind) {
   case "sell":
-    quote.buyAmount = quote.buyAmount
+    quote.buyAmount = ethers.BigNumber.from(quote.buyAmount)
       .mul(10000 - options.slippage)
-      .div(10000);
+      .div(10000)
+      .toString();
     break;
   case "buy":
-    quote.sellAmount = quote.sellAmount
+    quote.sellAmount = ethers.BigNumber.from(quote.sellAmount)
       .mul(10000 + options.slippage)
-      .div(10000);
+      .div(10000)
+      .toString();
     break;
 }
 
@@ -70,14 +68,8 @@ const orderHash = ethers.utils._TypedDataEncoder.hash(
   },
 );
 
-const owners = [...options.owners];
-owners.sort((a, b) => {
-  const [aa, bb] = [a.address.toLowerCase(), b.address.toLowerCase()];
-  return (aa > bb) ? 1 : (aa < bb) ? -1 : 0;
-});
-
 let signature = "0x";
-for (const owner of owners) {
+for (const owner of sortByAddress(options.owners)) {
   signature = ethers.utils.hexConcat([
     signature,
     await owner._signTypedData(
@@ -110,13 +102,6 @@ const orderUid = await fetch(
       signature,
     }),
   },
-)
-  .then((response) => response.json())
-  .then((json) => {
-    if (json.errorType) {
-      throw new Error(json.description ?? json.errorType);
-    }
-    return json;
-  });
+).then(checkJsonError);
 
 console.log(orderUid);
