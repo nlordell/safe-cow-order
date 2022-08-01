@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "https://cdn.ethers.io/": "./cdn.ethers.io/",
+    "https://deno.land/": "./deno.land/"
+  }
+}
